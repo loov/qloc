@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
-	"text/tabwriter"
 	"time"
 )
 
@@ -78,17 +77,15 @@ func main() {
 	sort.Sort(ByCode{counts})
 
 	summary := Count{}
-	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 0, '\t', 0)
-	defer tw.Flush()
 
-	fmt.Fprintf(tw, "extension\tfiles\tbinary\tblank\tcode\n")
-	fmt.Fprintf(tw, "---\t---\t---\t---\t---\n")
+	fmt.Printf("%-12s %12s %12s %12s %12s\n", "extension", "files", "binary", "blank", "code")
+	fmt.Println(strings.Repeat("-", 12*5+4))
 	for _, count := range counts {
 		summary.Add(count)
-		fmt.Fprintf(tw, "%v\t%v\t%v\t%v\t%v\n", count.Ext, count.Files, count.Binary, count.Blank, count.Code)
+		fmt.Printf("%-12s %12d %12d %12d %12d\n", count.Ext, count.Files, count.Binary, count.Blank, count.Code)
 	}
-	fmt.Fprintf(tw, "---\t---\t---\t---\t---\n")
-	fmt.Fprintf(tw, "summary\t%v\t%v\t%v\t%v\n", summary.Files, summary.Binary, summary.Blank, summary.Code)
+	fmt.Println(strings.Repeat("-", 12*5+4))
+	fmt.Printf("%-12s %12d %12d %12d %12d\n", "summary", summary.Files, summary.Binary, summary.Blank, summary.Code)
 }
 
 func FileWorker(files chan string, result chan CountByExt, progress *int64) {
