@@ -73,25 +73,22 @@ func main() {
 
 	counts := make(Counts, 0, len(total))
 	for _, c := range total {
-		if !IsBinaryExt(c.Ext) {
-			counts = append(counts, c)
-		}
+		counts = append(counts, c)
 	}
-
 	sort.Sort(ByCode{counts})
 
 	summary := Count{}
 	tw := tabwriter.NewWriter(os.Stdout, 0, 8, 0, '\t', 0)
 	defer tw.Flush()
 
-	fmt.Fprintf(tw, "extension\tfiles\tblank\tcode\n")
-	fmt.Fprintf(tw, "---\t---\t---\t---\n")
+	fmt.Fprintf(tw, "extension\tfiles\tbinary\tblank\tcode\n")
+	fmt.Fprintf(tw, "---\t---\t---\t---\t---\n")
 	for _, count := range counts {
 		summary.Add(count)
-		fmt.Fprintf(tw, "%v\t%v\t%v\t%v\n", count.Ext, count.Files, count.Blank, count.Code)
+		fmt.Fprintf(tw, "%v\t%v\t%v\t%v\t%v\n", count.Ext, count.Files, count.Binary, count.Blank, count.Code)
 	}
-	fmt.Fprintf(tw, "---\t---\t---\t---\n")
-	fmt.Fprintf(tw, "summary\t%v\t%v\t%v\n", summary.Files, summary.Blank, summary.Code)
+	fmt.Fprintf(tw, "---\t---\t---\t---\t---\n")
+	fmt.Fprintf(tw, "summary\t%v\t%v\t%v\t%v\n", summary.Files, summary.Binary, summary.Blank, summary.Code)
 }
 
 func FileWorker(files chan string, result chan CountByExt, progress *int64) {
@@ -99,15 +96,8 @@ func FileWorker(files chan string, result chan CountByExt, progress *int64) {
 	defer func() { result <- total }()
 
 	for file := range files {
-		if IsBinaryExt(filepath.Ext(file)) {
-			continue
-		}
-
 		count, err := CountLines(file)
 		if err != nil {
-			if err == ErrBinaryFile {
-				AddBinaryExt(filepath.Ext(file))
-			}
 			continue
 		}
 		total.Add(count)

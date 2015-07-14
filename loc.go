@@ -1,15 +1,20 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
+var (
+	ErrEmptyFile = errors.New("empty file")
+)
+
 func CountLines(path string) (*Count, error) {
 	count := &Count{
-		Ext:   strings.ToLower(filepath.Ext(path)),
+		Ext:   strings.ToLower(strings.TrimPrefix(filepath.Ext(path), ".")),
 		Files: 1,
 	}
 
@@ -36,10 +41,14 @@ func CountLines(path string) (*Count, error) {
 
 		for _, c := range buf[:n] {
 			switch c {
-			case 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7,
-				0x8, 0x0B, 0x0C, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14,
-				0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f:
-				return nil, ErrBinaryFile
+			case 0x0:
+
+				count.Blank = 0
+				count.Code = 0
+				count.Files = 0
+				count.Binary = 1
+
+				return count, nil
 			case '\n':
 				if emptyline {
 					count.Blank++
@@ -55,6 +64,10 @@ func CountLines(path string) (*Count, error) {
 		if err == io.EOF {
 			break
 		}
+	}
+
+	if !emptyline {
+		count.Code++
 	}
 
 	return count, nil

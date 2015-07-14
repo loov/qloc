@@ -1,11 +1,5 @@
 package main
 
-import (
-	"errors"
-	"sync"
-	"sync/atomic"
-)
-
 type CountByExt map[string]*Count
 
 func (xs CountByExt) Add(s *Count) {
@@ -18,15 +12,17 @@ func (xs CountByExt) Add(s *Count) {
 }
 
 type Count struct {
-	Ext   string
-	Files int
-	Blank int
-	Code  int
+	Ext    string
+	Files  int
+	Binary int
+	Blank  int
+	Code   int
 }
 
 func (c *Count) Add(s *Count) {
 	c.Ext = s.Ext
 	c.Files += s.Files
+	c.Binary += s.Binary
 	c.Blank += s.Blank
 	c.Code += s.Code
 }
@@ -38,38 +34,8 @@ func (xs Counts) Swap(i, j int) { xs[i], xs[j] = xs[j], xs[i] }
 
 type ByCode struct{ Counts }
 
-func (xs ByCode) Less(i, j int) bool { return xs.Counts[i].Code > xs.Counts[i].Code }
+func (xs ByCode) Less(i, j int) bool { return xs.Counts[i].Code > xs.Counts[j].Code }
 
 type ByExt struct{ Counts }
 
-func (xs ByExt) Less(i, j int) bool { return xs.Counts[i].Ext < xs.Counts[i].Ext }
-
-var (
-	BinaryExtCacheWrite = sync.Mutex{}
-	BinaryExtCache      = atomic.Value{}
-
-	ErrEmptyFile  = errors.New("empty file")
-	ErrBinaryFile = errors.New("binary file")
-)
-
-func init() { BinaryExtCache.Store(make(map[string]bool)) }
-func IsBinaryExt(ext string) bool {
-	if ShouldExamine(ext) {
-		return false
-	}
-	cache := BinaryExtCache.Load().(map[string]bool)
-	return cache[ext]
-}
-
-func AddBinaryExt(ext string) {
-	BinaryExtCacheWrite.Lock()
-	defer BinaryExtCacheWrite.Unlock()
-
-	cache := BinaryExtCache.Load().(map[string]bool)
-	next := make(map[string]bool)
-	for e := range cache {
-		next[e] = true
-	}
-	next[ext] = true
-	BinaryExtCache.Store(next)
-}
+func (xs ByExt) Less(i, j int) bool { return xs.Counts[i].Ext < xs.Counts[j].Ext }
