@@ -117,7 +117,8 @@ func IterateDir(root string, work chan string) {
 			return nil
 		}
 
-		if strings.Contains(path, "~") {
+		// if a filename contains ~ we assume it's a temporary file
+		if strings.Contains(filepath.Base(path), "~") {
 			return nil
 		}
 
