@@ -30,9 +30,9 @@ func ShouldExamine(ext string) bool {
 func main() {
 	flag.Parse()
 
-	path := flag.Arg(0)
-	if path == "" {
-		path = "."
+	paths := flag.Args()
+	if len(paths) == 0 {
+		paths = []string{"."}
 	}
 
 	if *exts != "" {
@@ -47,7 +47,7 @@ func main() {
 
 	work := make(chan string, 100)
 	results := make(chan CountByExt, *procs)
-	go IterateDir(path, work)
+	go IterateDir(work, paths...)
 
 	for i := 0; i < *procs; i++ {
 		go FileWorker(work, results, &progress)
@@ -102,7 +102,7 @@ func FileWorker(files chan string, result chan CountByExt, progress *int64) {
 	}
 }
 
-func IterateDir(root string, work chan string) {
+func IterateDir(work chan string, roots ...string) {
 	walk := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -130,9 +130,11 @@ func IterateDir(root string, work chan string) {
 		return nil
 	}
 
-	err := filepath.Walk(root, walk)
-	if err != nil {
-		log.Println(err)
+	for _, root := range roots {
+		err := filepath.Walk(root, walk)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	close(work)
