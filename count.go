@@ -30,12 +30,32 @@ func (c *Count) Add(s *Count) {
 type Counts []*Count
 
 func (xs Counts) Len() int      { return len(xs) }
-func (xs Counts) Swap(i, j int) { xs[i], xs[j] = xs[j], xs[i] }
+func (xs Counts) Swap(i, k int) { xs[i], xs[k] = xs[k], xs[i] }
 
 type ByCode struct{ Counts }
 
-func (xs ByCode) Less(i, j int) bool { return xs.Counts[i].Code > xs.Counts[j].Code }
+func (xs ByCode) Less(i, k int) bool {
+	a, b := xs.Counts[i], xs.Counts[k]
+	if a.Code == b.Code {
+		if a.Binary == b.Binary {
+			return a.Ext < b.Ext
+		}
+		return a.Binary > b.Binary
+	}
+	return a.Code > b.Code
+}
 
 type ByExt struct{ Counts }
 
-func (xs ByExt) Less(i, j int) bool { return xs.Counts[i].Ext < xs.Counts[j].Ext }
+func (xs ByExt) Less(i, k int) bool {
+	a, b := xs.Counts[i], xs.Counts[k]
+	if a.Ext == b.Ext {
+		if a.Code == b.Code {
+			if a.Binary == b.Binary {
+				return a.Blank < b.Blank
+			}
+			return a.Binary > b.Binary
+		}
+	}
+	return a.Ext < b.Ext
+}
