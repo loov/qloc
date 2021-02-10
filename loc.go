@@ -22,6 +22,7 @@ func CountLines(path string) (*Count, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = file.Close() }()
 
 	stat, err := file.Stat()
 	if err != nil {
